@@ -1,0 +1,345 @@
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Page     1-1
+
+
+ 0000				STACKK	SEGMENT	STACK
+							
+ 0000  000C[				DW 12 DUP(?)
+	   ????			
+			 ]	
+				
+				
+ 0018				STACKK    	ENDS
+				
+ 0000				DATA		SEGMENT
+				
+ 0000  54 79 70 65 20 79	STRING			db	'Type your PC: 
+				$'
+       6F 75 72 20 50 43	
+       3A 20 24			
+ 000F  50 43 24			STRING_ONE		db	'PC$'
+ 0012  50 43 2F 58 54 24	STRING_TWO		db	'PC/XT$'
+ 0018  41 54 24			STRING_TREE		db	'AT$'
+ 001B  50 53 32 20 6D 6F	STRING_FOUR		db	'PS2 model 30$'
+       64 65 6C 20 33 30	
+       24			
+ 0028  50 53 32 20 6D 6F	STRING_FIVE		db	'PS2 model 80$'
+       64 65 6C 20 38 30	
+       24			
+ 0035  50 43 6A 72 24		STRING_SIX		db	'PCjr$'
+ 003A  50 43 20 43 6F 6E	STRING_SEVEN	db	'PC Convertible$'
+       76 65 72 74 69 62	
+       6C 65 24			
+ 0049  0D 0A 4F 53 20 76	VERS			db	0DH, 0AH, 'OS v
+				ersion: 0 .0   $'
+       65 72 73 69 6F 6E	
+       3A 20 30 20 2E 30	
+       20 20 20 24		
+ 005F  0D 0A 4F 45 4D 3A	OEM 			db	0DH, 0AH, 'OEM:
+				     ', '$'
+       20 20 20 20 20 24	
+ 006B  0D 0A 53 65 72 69	NUMBER 			db	0DH, 0AH, 'Seri
+				al number:        ', '$'
+       61 6C 20 6E 75 6D	
+       62 65 72 3A 20 20	
+       20 20 20 20 20 20	
+       24			
+ 0084  45 52 52 4F 52 20	ERRO			db	'ERROR ERROR ER
+				ROR!', 0DH, 0AH, '$'
+       45 52 52 4F 52 20	
+       45 52 52 4F 52 21	
+       0D 0A 24			
+				
+ 0099				DATA		ENDS
+				
+ 0000				CODE		SEGMENT
+				ASSUME 	CS:CODE, DS:DATA, SS:STACKK
+				
+				;процедура получения симв
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Page     1-2
+
+
+				ола в 16 с/c
+ 0000				TETR_TO_HEX	PROC	near
+				 
+ 0000  24 0F					and	AL,0Fh
+ 0002  3C 09					cmp	AL,09
+ 0004  76 02					jbe	NEXT
+ 0006  04 07					add	AL,07
+						
+ 0008  04 30			NEXT:	add	AL,30h
+ 000A  C3					ret 
+				
+ 000B				TETR_TO_HEX	ENDP
+				
+				;процедура перевода байта
+				 в AL в два символа 16 с/c в AX
+ 000B				BYTE_TO_HEX	PROC	near
+				
+ 000B  51					push CX
+ 000C  8A E0					mov	AH,AL
+ 000E  E8 0000 R				call TETR_TO_HEX
+ 0011  86 C4					xchg AL,AH
+ 0013  B1 04					mov	CL,4
+ 0015  D2 E8					shr	AL,CL
+ 0017  E8 0000 R				call TETR_TO_HEX 	;в AL 
+				старшая цифра
+ 001A  59					pop	CX		
+						;в AH младшая цифр�
+				�
+ 001B  C3					ret 
+						
+ 001C				BYTE_TO_HEX	ENDP
+				
+				;процедура записи 16-ти раз
+				раядного числа в 16 с/c в ст�
+				�оку
+ 001C				WRD_TO_HEX	PROC	near
+				
+ 001C  53					push	BX
+ 001D  8A FC					mov	BH,AH
+ 001F  E8 000B R				call	BYTE_TO_HEX
+ 0022  88 25					mov	[DI],AH
+ 0024  4F					dec	DI
+ 0025  88 05					mov	[DI],AL
+ 0027  4F					dec	DI
+ 0028  8A C7					mov	AL,BH
+ 002A  E8 000B R				call	BYTE_TO_HEX
+ 002D  88 25					mov	[DI],AH
+ 002F  4F					dec	DI
+ 0030  88 05					mov	[DI],AL
+ 0032  5B					pop	BX
+ 0033  C3					ret 
+ 0034				WRD_TO_HEX ENDP
+				
+				;процедура записи числа в 
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Page     1-3
+
+
+				10 с/c в строку
+ 0034				BYTE_TO_DEC	PROC	near
+				
+ 0034  51					push	CX
+ 0035  52					push	DX
+ 0036  32 E4					xor	AH,AH
+ 0038  33 D2					xor	DX,DX
+ 003A  B9 000A					mov	CX,10 
+						
+ 003D  F7 F1			loop_bd:div	CX
+ 003F  80 CA 30					or	DL,30h
+ 0042  88 14					mov	[SI],DL
+ 0044  4E					dec	SI
+ 0045  33 D2					xor	DX,DX
+ 0047  3D 000A					cmp	AX,10
+ 004A  73 F1					jae	loop_bd
+ 004C  3C 00					cmp	AL,00h
+ 004E  74 04					je	end_l
+ 0050  0C 30					or	AL,30h
+ 0052  88 04					mov	[SI],AL
+						
+ 0054  5A			end_l:	pop	DX
+ 0055  59					pop	CX
+ 0056  C3					ret
+						
+ 0057				BYTE_TO_DEC	ENDP
+				
+ 0057				BEGIN 	PROC	FAR
+				          	
+						;сохранение адре�
+				�а возврата в DOS
+ 0057  1E					PUSH DS		
+ 0058  2B C0			       	SUB  AX, AX
+ 005A  50			        PUSH AX
+ 005B  B8 ---- R		       	MOV  AX, DATA
+ 005E  8E D8			       	MOV  DS, AX
+				
+						;получение типа у
+				стройства 
+ 0060  B8 F000			       	MOV	AX, 0F000H
+ 0063  8E C0					MOV	ES, AX
+ 0065  26: A0 FFFE				MOV	AL, ES:[0FFFEH]
+						
+ 0069  BA 0000 R				mov	DX, OFFSET STRING
+						; Вывод строки те�
+				�ста из поля STRING
+					
+ 006C  50					push	AX
+ 006D  B4 09			       	mov	AH, 09h
+ 006F  CD 21			        int	21h
+ 0071  58					pop	AX 
+				
+						;поиск нужной стр
+				оки  
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Page     1-4
+
+
+ 0072  3C FF					cmp 	AL, 0FFH
+ 0074  BA 000F R				mov	DX, OFFSET STRING_ONE
+ 0077  EB 47 90					jmp 	RESULT
+ 007A  3C FE					cmp 	AL, 0FEH
+ 007C  BA 0012 R				mov 	DX, OFFSET STRING_TWO
+ 007F  EB 3F 90					jmp 	RESULT
+ 0082  3C FB					cmp 	AL, 0FBH
+ 0084  BA 0012 R				mov 	DX, OFFSET STRING_TWO
+ 0087  EB 37 90					jmp 	RESULT
+ 008A  3C FC					cmp	AL, 0FCH
+ 008C  BA 0018 R				mov 	DX, OFFSET STRING_TREE
+ 008F  EB 2F 90					jmp 	RESULT
+ 0092  3C FA					cmp 	AL, 0FAH
+ 0094  BA 001B R				mov 	DX, OFFSET STRING_FOUR
+ 0097  EB 27 90					jmp 	RESULT
+ 009A  3C F8					cmp 	AL, 0F8H
+ 009C  BA 0028 R				mov 	DX, OFFSET STRING_FIVE
+ 009F  EB 1F 90					jmp 	RESULT
+ 00A2  3C FD					cmp 	AL, 0FDH
+ 00A4  BA 0035 R				mov 	DX, OFFSET STRING_SIX
+ 00A7  EB 17 90					jmp 	RESULT
+ 00AA  3C F9					cmp 	AL, 0F9H
+ 00AC  BA 003A R				mov 	DX, OFFSET STRING_SEVEN
+ 00AF  EB 0F 90					jmp 	RESULT	
+				
+						;если код ни с чем
+				 не совпал,
+						;то выводим его н�
+				� экран
+						;с соответствующ�
+				�м сообщением
+				
+ 00B2  BF 0084 R				mov	DI, OFFSET ERRO
+ 00B5  83 C7 24					add	DI, 24h
+ 00B8  E8 000B R				call	BYTE_TO_HEX
+ 00BB  89 05					mov	[DI], AX
+ 00BD  BA 0084 R				mov	DX, OFFSET ERRO
+				
+ 00C0				RESULT:
+ 00C0  50					push	AX
+ 00C1  B4 09			       	mov	AH, 09h
+ 00C3  CD 21			        int	21h
+ 00C5  58					pop	AX 
+				
+						;получение верси�
+				�
+ 00C6  B4 30					MOV	 AH, 30H
+ 00C8  CD 21					INT	 21H
+ 00CA  50					PUSH AX
+					
+						;определение вер�
+				�ии системы и её печать
+ 00CB  BE 0049 R		       	MOV	 SI, OFFSET VERS
+ 00CE  83 C6 0F					ADD	 SI, 0FH
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Page     1-5
+
+
+ 00D1  E8 0034 R				CALL BYTE_TO_DEC
+				
+ 00D4  83 C6 04					ADD	 SI, 4H 
+ 00D7  58					POP	 AX
+ 00D8  8A C4					MOV	 AL, AH
+ 00DA  E8 0034 R				CALL BYTE_TO_DEC
+ 00DD  BA 0049 R				MOV	 DX, OFFSET VERS
+ 00E0  50					push AX
+ 00E1  B4 09			       	mov	AH, 09h
+ 00E3  CD 21			        int	21h
+ 00E5  58					pop	AX 
+					
+						;вывод серийного 
+				номера OEM
+ 00E6  BE 005F R				MOV  SI, OFFSET OEM
+ 00E9  83 C6 08					ADD  SI, 8H
+ 00EC  8A C7					MOV	 AL, BH
+ 00EE  E8 0034 R				CALL BYTE_TO_DEC
+ 00F1  BA 005F R				MOV	 DX, OFFSET OEM
+ 00F4  50					push AX
+ 00F5  B4 09			       	mov	AH, 09h
+ 00F7  CD 21			        int	21h
+ 00F9  58					pop	AX 
+					
+						;вывод номера пол
+				ьзователя
+ 00FA  BF 006B R				MOV	 DI, OFFSET NUMBER
+ 00FD  83 C7 16					ADD	 DI, 16H
+ 0100  8B C1					MOV	 AX, CX
+ 0102  E8 001C R				CALL WRD_TO_HEX
+ 0105  8A C3					MOV	 AL, BL
+ 0107  E8 000B R				CALL BYTE_TO_HEX
+ 010A  83 EF 02					SUB	 DI, 2H
+ 010D  89 05					MOV	 [DI], AX
+ 010F  BA 006B R				MOV	 DX, OFFSET NUMBER
+ 0112  50					push	AX
+ 0113  B4 09			       	mov	AH, 09h
+ 0115  CD 21			        int	21h
+ 0117  58					pop	AX 
+				
+ 0118  CB			       	RET
+				       
+ 0119				BEGIN		ENDP
+ 0119				CODE		ENDS
+				END 		BEGIN
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CODE . . . . . . . . . . . . . .  	0119	PARA	NONE	
+DATA . . . . . . . . . . . . . .  	0099	PARA	NONE	
+STACKK . . . . . . . . . . . . .  	0018	PARA	STACK	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+BEGIN  . . . . . . . . . . . . .  	F PROC	0057	CODE	Length = 00C2
+BYTE_TO_DEC  . . . . . . . . . .  	N PROC	0034	CODE	Length = 0023
+BYTE_TO_HEX  . . . . . . . . . .  	N PROC	000B	CODE	Length = 0011
+
+END_L  . . . . . . . . . . . . .  	L NEAR	0054	CODE
+ERRO . . . . . . . . . . . . . .  	L BYTE	0084	DATA
+
+LOOP_BD  . . . . . . . . . . . .  	L NEAR	003D	CODE
+
+NEXT . . . . . . . . . . . . . .  	L NEAR	0008	CODE
+NUMBER . . . . . . . . . . . . .  	L BYTE	006B	DATA
+
+OEM  . . . . . . . . . . . . . .  	L BYTE	005F	DATA
+
+RESULT . . . . . . . . . . . . .  	L NEAR	00C0	CODE
+
+STRING . . . . . . . . . . . . .  	L BYTE	0000	DATA
+STRING_FIVE  . . . . . . . . . .  	L BYTE	0028	DATA
+STRING_FOUR  . . . . . . . . . .  	L BYTE	001B	DATA
+STRING_ONE . . . . . . . . . . .  	L BYTE	000F	DATA
+STRING_SEVEN . . . . . . . . . .  	L BYTE	003A	DATA
+STRING_SIX . . . . . . . . . . .  	L BYTE	0035	DATA
+STRING_TREE  . . . . . . . . . .  	L BYTE	0018	DATA
+STRING_TWO . . . . . . . . . . .  	L BYTE	0012	DATA
+
+TETR_TO_HEX  . . . . . . . . . .  	N PROC	0000	CODE	Length = 000B
+
+VERS . . . . . . . . . . . . . .  	L BYTE	0049	DATA
+
+WRD_TO_HEX . . . . . . . . . . .  	N PROC	001C	CODE	Length = 0018
+
+@CPU . . . . . . . . . . . . . .  	TEXT  0101h		
+@FILENAME  . . . . . . . . . . .  	TEXT  prog_e		
+@VERSION . . . . . . . . . . . .  	TEXT  510		
+
+Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+                                                             Symbols-2
+
+
+
+    214 Source  Lines
+    214 Total   Lines
+     29 Symbols
+
+  47886 + 453229 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
