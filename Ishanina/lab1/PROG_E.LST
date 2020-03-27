@@ -1,15 +1,15 @@
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Page     1-1
 
 
  0000				STACKK	SEGMENT	STACK
 							
- 0000  000C[				DW 12 DUP(?)
+ 0000  0100[				DW 100h DUP(?)
 	   ????			
 			 ]	
 				
 				
- 0018				STACKK    	ENDS
+ 0200				STACKK    	ENDS
 				
  0000				DATA		SEGMENT
 				
@@ -56,7 +56,7 @@
 				ASSUME 	CS:CODE, DS:DATA, SS:STACKK
 				
 				;процедура получения симв
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Page     1-2
 
 
@@ -114,7 +114,7 @@
  0034				WRD_TO_HEX ENDP
 				
 				;процедура записи числа в 
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Page     1-3
 
 
@@ -172,7 +172,7 @@
 				
 						;поиск нужной стр
 				оки  
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Page     1-4
 
 
@@ -230,7 +230,7 @@
 				�ии системы и её печать
  00CB  BE 0049 R		       	MOV	 SI, OFFSET VERS
  00CE  83 C6 0F					ADD	 SI, 0FH
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Page     1-5
 
 
@@ -279,7 +279,7 @@
  0119				BEGIN		ENDP
  0119				CODE		ENDS
 				END 		BEGIN
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Symbols-1
 
 
@@ -289,7 +289,7 @@ Segments and Groups:
 
 CODE . . . . . . . . . . . . . .  	0119	PARA	NONE	
 DATA . . . . . . . . . . . . . .  	0099	PARA	NONE	
-STACKK . . . . . . . . . . . . .  	0018	PARA	STACK	
+STACKK . . . . . . . . . . . . .  	0200	PARA	STACK	
 
 Symbols:            
 
@@ -330,7 +330,7 @@ WRD_TO_HEX . . . . . . . . . . .  	N PROC	001C	CODE	Length = 0018
 @FILENAME  . . . . . . . . . . .  	TEXT  prog_e		
 @VERSION . . . . . . . . . . . .  	TEXT  510		
 
-Microsoft (R) Macro Assembler Version 5.10                  3/10/20 15:23:30
+Microsoft (R) Macro Assembler Version 5.10                  3/27/20 21:52:29
                                                              Symbols-2
 
 

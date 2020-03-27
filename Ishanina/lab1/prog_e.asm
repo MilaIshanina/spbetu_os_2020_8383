@@ -1,6 +1,6 @@
 STACKK	SEGMENT	STACK
 			
-	DW 12 DUP(?)
+	DW 100h DUP(?)
 
 STACKK    	ENDS
 

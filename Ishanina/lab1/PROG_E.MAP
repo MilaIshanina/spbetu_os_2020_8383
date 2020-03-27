@@ -1,7 +1,7 @@
 
  Start  Stop   Length Name                   Class
- 00000H 00017H 00018H STACKK                 
- 00020H 000B8H 00099H DATA                   
- 000C0H 001D8H 00119H CODE                   
+ 00000H 001FFH 00200H STACKK                 
+ 00200H 00298H 00099H DATA                   
+ 002A0H 003B8H 00119H CODE                   
 
-Program entry point at 000C:0057
+Program entry point at 002A:0057
