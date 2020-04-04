@@ -1,0 +1,369 @@
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-1
+
+
+ 0000				TESTPC	SEGMENT
+				ASSUME	CS:TESTPC, DS:TESTPC, ES:NOTHING, SS:NO
+				THING
+ 0100				ORG	100H
+ 0100  E9 01F8 R		START:	JMP BEGIN
+				
+				; Данные
+ 0103  55 6E 61 76 61 69	UN_ADDRESS	db	'Unavailable memory seg
+				ment address:     ',0dh,0ah,'$'
+       6C 61 62 6C 65 20	
+       6D 65 6D 6F 72 79	
+       20 73 65 67 6D 65	
+       6E 74 20 61 64 64	
+       72 65 73 73 3A 20	
+       20 20 20 20 0D 0A	
+       24			
+ 012E  45 6E 76 69 72 6F	EN_ADDRESS	db	'Environment segment ad
+				dress:     ',0dh,0ah,'$'
+       6E 6D 65 6E 74 20	
+       73 65 67 6D 65 6E	
+       74 20 61 64 64 72	
+       65 73 73 3A 20 20	
+       20 20 20 0D 0A 24	
+ 0152  43 6F 6D 6D 61 6E	COMMAND_TAIL		db	'Command line t
+				ail:',0dh,0ah,'$'
+       64 20 6C 69 6E 65	
+       20 74 61 69 6C 3A	
+       0D 0A 24			
+ 0167  45 6E 76 69 72 6F	EN_CONTENTS	db	'Environment area conte
+				nts: ','$'
+       6E 6D 65 6E 74 20	
+       61 72 65 61 20 63	
+       6F 6E 74 65 6E 74	
+       73 3A 20 24		
+ 0183  4D 6F 64 75 6C 65	MODULE_PATH		db	'Module load pa
+				th: ','$'
+       20 6C 6F 61 64 20	
+       70 61 74 68 3A 20	
+       24			
+ 0196  0D 0A 24			ENDL			db	0dh,0ah,'$'
+				
+ 0199  2D 2D 2D 2D 2D 2D	SEPARATION		db	'--------------
+				--------------------------',0dh,0ah,'$'
+       2D 2D 2D 2D 2D 2D	
+       2D 2D 2D 2D 2D 2D	
+       2D 2D 2D 2D 2D 2D	
+       2D 2D 2D 2D 2D 2D	
+       2D 2D 2D 2D 2D 2D	
+       2D 2D 2D 2D 0D 0A	
+       24			
+				
+				
+ 01C4				TETR_TO_HEX	PROC	near
+ 01C4  24 0F					and	al,0fh
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-2
+
+
+ 01C6  3C 09					cmp	al,09
+ 01C8  76 02					jbe	NEXT
+ 01CA  04 07					add	al,07
+ 01CC				NEXT:		
+ 01CC  04 30					add	al,30h
+ 01CE  C3					ret
+ 01CF				TETR_TO_HEX	ENDP
+				;----------------------------------------
+ 01CF				BYTE_TO_HEX	PROC near
+ 01CF  51					push cx
+ 01D0  8A E0					mov	ah,al
+ 01D2  E8 01C4 R				call TETR_TO_HEX
+ 01D5  86 C4					xchg al,ah
+ 01D7  B1 04					mov	cl,4
+ 01D9  D2 E8					shr	al,cl
+ 01DB  E8 01C4 R				call TETR_TO_HEX 
+ 01DE  59					pop	cx 
+ 01DF  C3					ret
+ 01E0				BYTE_TO_HEX	ENDP
+				;---------------------------------------
+ 01E0				WRD_TO_HEX	PROC	near
+ 01E0  53					push bx
+ 01E1  8A FC					mov	bh,ah
+ 01E3  E8 01CF R				call BYTE_TO_HEX
+ 01E6  88 25					mov	[di],ah
+ 01E8  4F					dec	di
+ 01E9  88 05					mov	[di],al
+ 01EB  4F					dec	di
+ 01EC  8A C7					mov	al,bh
+ 01EE  E8 01CF R				call BYTE_TO_HEX
+ 01F1  88 25					mov	[di],ah
+ 01F3  4F					dec	di
+ 01F4  88 05					mov	[di],al
+ 01F6  5B					pop	bx
+ 01F7  C3					ret
+ 01F8				WRD_TO_HEX	ENDP
+				;----------------------------
+				
+ 01F8				BEGIN:
+				
+				;Сегм. адрес недоступной п
+				амяти
+				
+ 01F8  50				push ax
+ 01F9  26: A1 0002			mov ax,es:[2]
+ 01FD  8D 3E 0103 R			lea	di,UN_ADDRESS
+ 0201  83 C7 27				add di,39
+ 0204  E8 01E0 R			call WRD_TO_HEX
+ 0207  58				pop	ax
+				
+				
+				;Сегм. адрес передаваемой 
+				среды
+				
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-3
+
+
+ 0208  50				push ax
+ 0209  26: A1 002C			mov ax,es:[2Ch]
+ 020D  8D 3E 012E R			lea	di,EN_ADDRESS
+ 0211  83 C7 20				add di,32
+ 0214  E8 01E0 R			call WRD_TO_HEX
+ 0217  58				pop	ax
+				
+				;Вывод на экран
+				
+ 0218  8D 16 0199 R		lea dx, SEPARATION  
+ 021C  B4 09				mov	ah,09h
+ 021E  CD 21				int	21h
+ 0220  8D 16 0196 R		lea	dx,ENDL
+ 0224  B4 09				mov	ah,09h
+ 0226  CD 21				int	21h
+					
+ 0228  8D 16 0103 R			lea	dx,UN_ADDRESS  
+ 022C  B4 09				mov	ah,09h
+ 022E  CD 21				int	21h
+						
+ 0230  8D 16 0196 R			lea	dx,ENDL
+ 0234  B4 09				mov	ah,09h
+ 0236  CD 21				int	21h
+					
+ 0238  8D 16 0199 R			lea dx, SEPARATION  
+ 023C  B4 09				mov	ah,09h
+ 023E  CD 21				int	21h
+					
+ 0240  8D 16 0196 R			lea	dx,ENDL
+ 0244  B4 09				mov	ah,09h
+ 0246  CD 21				int	21h
+					
+ 0248  8D 16 012E R			lea	dx,EN_ADDRESS
+ 024C  B4 09				mov	ah,09h
+ 024E  CD 21				int	21h 
+					
+ 0250  8D 16 0196 R			lea	dx,ENDL
+ 0254  B4 09				mov	ah,09h
+ 0256  CD 21				int	21h
+					
+ 0258  8D 16 0199 R			lea dx, SEPARATION  
+ 025C  B4 09				mov	ah,09h
+ 025E  CD 21				int	21h
+					
+ 0260  8D 16 0196 R			lea	dx,ENDL
+ 0264  B4 09				mov	ah,09h
+ 0266  CD 21				int	21h
+				
+				;Хвост командной строки в 
+				символьном виде
+				
+ 0268  8D 16 0152 R			lea dx, COMMAND_TAIL  
+ 026C  B4 09				mov	ah,09h
+ 026E  CD 21				int	21h
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-4
+
+
+				
+ 0270  50				push ax
+ 0271  51				push cx
+ 0272  33 C0			    xor	ax, ax
+ 0274  26: A0 0080		    mov al, es:[80h]
+ 0278  04 81			    add al, 81h
+ 027A  8B F0			    mov si, ax
+ 027C  26: FF 34		    push es:[si]
+ 027F  26: C6 44 01 24		    mov byte ptr es:[si+1], '$'
+ 0284  1E			    push ds
+ 0285  8C C1			    mov cx, es
+ 0287  8E D9			    mov ds, cx
+ 0289  BA 0081			    mov dx, 81h
+ 028C  B4 09				mov	ah,09h
+ 028E  CD 21				int	21h
+ 0290  1F			   	pop ds
+ 0291  26: 8F 04		    pop es:[si]
+ 0294  59			    pop	cx
+ 0295  58			    pop	ax
+				
+ 0296  8D 16 0196 R		    lea	dx,ENDL
+ 029A  B4 09				mov	ah,09h
+ 029C  CD 21				int	21h
+					
+ 029E  8D 16 0199 R			lea dx, SEPARATION  
+ 02A2  B4 09				mov	ah,09h
+ 02A4  CD 21				int	21h
+					
+ 02A6  8D 16 0196 R			lea	dx,ENDL
+ 02AA  B4 09				mov	ah,09h
+ 02AC  CD 21				int	21h
+				
+				; Содержимое области сред�
+				� в символьном виде
+				
+ 02AE  8D 16 0167 R			lea	dx,EN_CONTENTS
+ 02B2  B4 09				mov	ah,09h
+ 02B4  CD 21				int	21h
+				   
+ 02B6  06				push es 
+ 02B7  26: 8E 06 002C			mov	es,es:[2ch]
+ 02BC  50				push ax
+ 02BD  53				push bx
+ 02BE  BB 0001				mov	bx,1
+ 02C1  51				push cx
+ 02C2  BE 0000				mov	si,0
+				
+ 02C5				BEG1:	
+ 02C5  8D 16 0196 R			lea	dx,ENDL
+ 02C9  B4 09				mov	ah,09h
+ 02CB  CD 21				int	21h
+ 02CD  8B C6				mov	ax,si 			; Со�
+				�р. начала
+				
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-5
+
+
+ 02CF				BEG2:	
+ 02CF  26: 80 3C 00			cmp byte ptr es:[si], 0	; Провер�
+				�а на ноль
+ 02D3  74 03				je NEXT_ELEM		; Конец э
+				лемента
+ 02D5  46				inc	si 			; Ув.
+				 на 1
+ 02D6  EB F7				jmp BEG2
+				
+ 02D8				NEXT_ELEM:	
+ 02D8  26: FF 34			push es:[si] 		; Сохран�
+				�ем в стек
+ 02DB  26: C6 04 24			mov	byte ptr es:[si], '$'
+ 02DF  1E				push ds 
+ 02E0  8C C1				mov	cx,es 
+ 02E2  8E D9				mov	ds,cx
+ 02E4  8B D0				mov	dx,ax
+				
+ 02E6  B4 09				mov	ah,09h
+ 02E8  CD 21				int	21h 
+				
+ 02EA  1F				pop	ds 
+ 02EB  26: 8F 04			pop	es:[si] 
+ 02EE  83 FB 00				cmp	bx,0 			; Пр�
+				�верка условия о выводе пу
+				ти до модуля
+ 02F1  74 2F				jz 	LAST 			; Ес�
+				�и =
+ 02F3  46				inc	si 			
+ 02F4  26: 80 3C 01			cmp byte ptr es:[si], 01h 	; Ес�
+				�ь еще
+ 02F8  75 CB			    jne BEG1
+					
+ 02FA  8D 16 0196 R			lea	dx,ENDL
+ 02FE  B4 09				mov	ah,09h
+ 0300  CD 21				int	21h
+				
+				; Путь загружаемого модул�
+				�
+ 0302  8D 16 0199 R		lea dx, SEPARATION  
+ 0306  B4 09				mov	ah,09h
+ 0308  CD 21				int	21h
+					
+ 030A  8D 16 0196 R			lea	dx,ENDL
+ 030E  B4 09				mov	ah,09h
+ 0310  CD 21				int	21h
+				
+ 0312  8D 16 0183 R		    lea	dx,MODULE_PATH
+ 0316  B4 09				mov	ah,09h
+ 0318  CD 21				int	21h 
+				
+ 031A  BB 0000			    mov	bx,0
+ 031D  83 C6 02			    add si,2 			; Пропус�
+				� ненужных
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Page     1-6
+
+
+ 0320  EB A3			    jmp BEG1
+				
+ 0322				LAST:	
+ 0322  8D 16 0196 R			lea	dx,ENDL
+ 0326  B4 09				mov	ah,09h
+ 0328  CD 21				int	21h 
+				
+ 032A  59				pop	cx 
+ 032B  5B				pop	bx 
+ 032C  58				pop	ax 
+ 032D  07				pop	es
+				
+				; выход в DOS
+ 032E  32 C0				xor	al,al
+ 0330  B4 01				mov ah, 01h
+ 0332  CD 21				int	21h
+ 0334  B4 4C				mov ah, 04Ch
+ 0336  CD 21				int 21h
+ 0338  C3				ret
+ 0339				TESTPC	ENDS
+				END 	START
+Microsoft (R) Macro Assembler Version 5.10                  3/28/20 17:51:01
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+TESTPC . . . . . . . . . . . . .  	0339	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+BEG1 . . . . . . . . . . . . . .  	L NEAR	02C5	TESTPC
+BEG2 . . . . . . . . . . . . . .  	L NEAR	02CF	TESTPC
+BEGIN  . . . . . . . . . . . . .  	L NEAR	01F8	TESTPC
+BYTE_TO_HEX  . . . . . . . . . .  	N PROC	01CF	TESTPC	Length = 0011
+
+COMMAND_TAIL . . . . . . . . . .  	L BYTE	0152	TESTPC
+
+ENDL . . . . . . . . . . . . . .  	L BYTE	0196	TESTPC
+EN_ADDRESS . . . . . . . . . . .  	L BYTE	012E	TESTPC
+EN_CONTENTS  . . . . . . . . . .  	L BYTE	0167	TESTPC
+
+LAST . . . . . . . . . . . . . .  	L NEAR	0322	TESTPC
+
+MODULE_PATH  . . . . . . . . . .  	L BYTE	0183	TESTPC
+
+NEXT . . . . . . . . . . . . . .  	L NEAR	01CC	TESTPC
+NEXT_ELEM  . . . . . . . . . . .  	L NEAR	02D8	TESTPC
+
+SEPARATION . . . . . . . . . . .  	L BYTE	0199	TESTPC
+START  . . . . . . . . . . . . .  	L NEAR	0100	TESTPC
+
+TETR_TO_HEX  . . . . . . . . . .  	N PROC	01C4	TESTPC	Length = 000B
+
+UN_ADDRESS . . . . . . . . . . .  	L BYTE	0103	TESTPC
+
+WRD_TO_HEX . . . . . . . . . . .  	N PROC	01E0	TESTPC	Length = 0018
+
+@CPU . . . . . . . . . . . . . .  	TEXT  0101h		
+@FILENAME  . . . . . . . . . . .  	TEXT  prog2		
+@VERSION . . . . . . . . . . . .  	TEXT  510		
+
+
+    240 Source  Lines
+    240 Total   Lines
+     23 Symbols
+
+  47786 + 455377 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
