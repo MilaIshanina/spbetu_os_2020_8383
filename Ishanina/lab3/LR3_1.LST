@@ -1,0 +1,375 @@
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-1
+
+
+ 0000				PART1	SEGMENT
+				ASSUME	CS:PART1,	DS:PART1,	ES:NOTH
+				ING,	SS:NOTHING
+ 0100				ORG	100H
+				
+ 0100  E9 031F R		START:	JMP BEGIN
+				
+ 0103  41 76 61 69 6C 61	quantity_available_memory  db  'Available memor
+				y:          bytes;',0dh,0ah,'$'
+       62 6C 65 20 6D 65	
+       6D 6F 72 79 3A 20	
+       20 20 20 20 20 20	
+       20 20 20 62 79 74	
+       65 73 3B 0D 0A 24	
+ 0127  45 78 74 65 6E 64	extended_memory_size  db  'Extended memory:    
+				       kilobytes;',0dh,0ah,'$'
+       65 64 20 6D 65 6D	
+       6F 72 79 3A 20 20	
+       20 20 20 20 20 20	
+       20 20 20 6B 69 6C	
+       6F 62 79 74 65 73	
+       3B 0D 0A 24		
+ 014F  4C 69 73 74 20 6F	MCB_List  db  'List of MCB:',0dh,0ah,'$'
+       66 20 4D 43 42 3A	
+       0D 0A 24			
+ 015E  54 79 70 65 3A 20	MCB_Type  db  'Type:   h; $'
+       20 20 68 3B 20 24	
+ 016A  53 65 67 6D 65 6E	MCB_Seg  db  'Segment`s adress:     h; $'
+       74 60 73 20 61 64	
+       72 65 73 73 3A 20	
+       20 20 20 20 68 3B	
+       20 24			
+ 0184  53 69 7A 65 3A 20	MCB_Size  db  'Size:       b$'
+       20 20 20 20 20 20	
+       62 24			
+ 0192  3B 20 20 20 20 20	MCB_Tail  db  ';               ',0dh,0ah,'$'
+       20 20 20 20 20 20	
+       20 20 20 20 0D 0A	
+       24			
+				
+ 01A5				TETR_TO_HEX	PROC	near
+ 01A5  24 0F					and	al,0fh
+ 01A7  3C 09					cmp	al,09
+ 01A9  76 02					jbe	NEXT
+ 01AB  04 07					add	al,07
+ 01AD  04 30			NEXT:	add	al,30h
+ 01AF  C3					ret
+ 01B0				TETR_TO_HEX	ENDP
+				;---------------------------
+ 01B0				BYTE_TO_HEX	PROC near
+ 01B0  51					push cx
+ 01B1  8A E0					mov	ah,al
+ 01B3  E8 01A5 R				call TETR_TO_HEX
+ 01B6  86 C4					xchg al,ah
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-2
+
+
+ 01B8  B1 04					mov	cl,4
+ 01BA  D2 E8					shr	al,cl
+ 01BC  E8 01A5 R				call TETR_TO_HEX
+ 01BF  59					pop	cx 	
+ 01C0  C3					ret
+ 01C1				BYTE_TO_HEX	ENDP
+				;--------------------------
+ 01C1				WRD_TO_HEX	PROC	near
+				
+ 01C1  53					push bx
+ 01C2  8A FC					mov	bh,ah
+ 01C4  E8 01B0 R				call BYTE_TO_HEX
+ 01C7  88 25					mov	[di],ah
+ 01C9  4F					dec	di
+ 01CA  88 05					mov	[di],al
+ 01CC  4F					dec	di
+ 01CD  8A C7					mov	al,bh
+ 01CF  E8 01B0 R				call BYTE_TO_HEX
+ 01D2  88 25					mov	[di],ah
+ 01D4  4F					dec	di
+ 01D5  88 05					mov	[di],al
+ 01D7  5B					pop	bx
+ 01D8  C3					ret
+ 01D9				WRD_TO_HEX	ENDP
+				;----------------------------
+ 01D9				BYTE_TO_DEC	PROC	near
+				
+ 01D9  51					push cx
+ 01DA  52					push dx
+ 01DB  50					push ax
+ 01DC  32 E4					xor	ah,ah
+ 01DE  33 D2					xor	dx,dx
+ 01E0  B9 000A					mov	cx,10
+ 01E3					loop_bd:
+ 01E3  F7 F1					div	cx
+ 01E5  80 CA 30					or dl,30h
+ 01E8  88 14					mov [si],dl
+ 01EA  4E					dec si
+ 01EB  33 D2					xor	dx,dx
+ 01ED  3D 000A					cmp	ax,10
+ 01F0  73 F1					jae	loop_bd
+ 01F2  3D 0000					cmp	ax,00h
+ 01F5  76 04					jbe	end_l
+ 01F7  0C 30					or	al,30h
+ 01F9  88 04					mov	[si],al
+ 01FB					end_l:	
+ 01FB  58					pop	ax
+ 01FC  5A					pop	dx
+ 01FD  59					pop	cx
+ 01FE  C3					ret
+ 01FF				BYTE_TO_DEC	ENDP
+				;---------------------------
+ 01FF				WRD_TO_DEC	PROC	near
+				
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-3
+
+
+ 01FF  51					push cx
+ 0200  52					push dx
+ 0201  50					push ax
+ 0202  B9 000A					mov	cx,10
+ 0205					wrd_loop_bd:
+ 0205  F7 F1					div	cx
+ 0207  80 CA 30					or 	dl,30h
+ 020A  88 14					mov [si],dl
+ 020C  4E					dec si
+ 020D  33 D2					xor	dx,dx
+ 020F  3D 000A					cmp	ax,10
+ 0212  73 F1					jae	wrd_loop_bd
+ 0214  3D 0000					cmp	ax,00h
+ 0217  76 04					jbe	wrd_end_l
+ 0219  0C 30					or	al,30h
+ 021B  88 04					mov	[si],al
+ 021D					wrd_end_l:	
+ 021D  58					pop	ax
+ 021E  5A					pop	dx
+ 021F  59					pop	cx
+ 0220  C3					ret
+ 0221				WRD_TO_DEC	ENDP
+				
+ 0221				GET_MEMORY    PROC    near
+ 0221  50					push ax
+ 0222  53					push bx
+ 0223  51					push cx
+ 0224  52					push dx
+ 0225  BB FFFF					mov bx, 0ffffh
+ 0228  B4 4A					mov ah, 4Ah
+ 022A  CD 21			    	int 21h
+ 022C  8B C3			    	mov ax, bx
+ 022E  B9 0010			    	mov cx, 10h
+ 0231  F7 E1			    	mul cx
+ 0233  8D 36 011C R		    	lea si, quantity_available_memory+25
+ 0237  E8 01FF R		    	call WRD_TO_DEC
+ 023A  8D 16 0103 R				lea	dx, quantity_available_
+				memory
+ 023E  B4 09					mov	ah,09h
+ 0240  CD 21					int	21h
+								
+ 0242  5A					pop	dx
+ 0243  59					pop	cx
+ 0244  5B					pop	bx
+ 0245  58					pop	ax
+ 0246  C3					ret
+ 0247				GET_MEMORY    ENDP
+				;---------------------------
+ 0247				GET_EXT_MEMORY    PROC    near
+ 0247  50					push ax
+ 0248  53					push bx
+ 0249  56					push si
+ 024A  52					push dx
+ 024B  B0 30					mov	al, 30h 
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-4
+
+
+ 024D  E6 70					out	70h, al 
+ 024F  E4 71					in	al, 71h 
+ 0251  8A D8					mov	bl, al 
+ 0253  B0 31					mov	al, 31h 
+ 0255  E6 70					out	70h, al
+ 0257  E4 71					in	al, 71h 
+ 0259  8A E0					mov ah, al
+ 025B  8A C3					mov al, bl 
+ 025D  2B D2					sub dx, dx
+ 025F  8D 36 0140 R				lea si, extended_memory_size+25
+ 0263  E8 01FF R				call WRD_TO_DEC
+ 0266  8D 16 0127 R				lea dx, extended_memory_size
+ 026A  B4 09					mov	ah,09h
+ 026C  CD 21					int	21h
+ 026E  5A					pop	dx
+ 026F  5E					pop	si
+ 0270  5B					pop	bx
+ 0271  58					pop	ax
+ 0272  C3					ret
+ 0273				GET_EXT_MEMORY    ENDP
+				;---------------------------
+ 0273				GET_TAIL	PROC	near
+ 0273  56					push si
+ 0274  51					push cx
+ 0275  53					push bx
+ 0276  50					push ax
+ 0277  BB 0008					mov	bx,0008h
+ 027A  B9 0004					mov	cx,4
+ 027D					RE:
+ 027D  26: 8B 07				mov	ax,es:[bx]
+ 0280  89 04					mov	[si],ax
+ 0282  83 C3 02					add bx,2h
+ 0285  83 C6 02					add	si,2h
+ 0288  E2 F3					loop RE
+ 028A  58					pop	ax
+ 028B  5B			    	pop	bx
+ 028C  59			    	pop	cx
+ 028D  5E					pop	si
+ 028E  C3					ret
+ 028F				GET_TAIL	ENDP
+				;---------------------------
+ 028F				GET_MCB	PROC  near
+ 028F  50					push ax
+ 0290  53					push bx
+ 0291  51					push cx
+ 0292  52					push dx
+ 0293  8D 16 014F R				lea	dx, MCB_List
+ 0297  B4 09					mov	ah,09h
+ 0299  CD 21					int	21h
+ 029B  B4 52					mov	ah,52h
+ 029D  CD 21					int	21h
+ 029F  26: 8E 47 FE				mov	es,es:[bx-2]
+ 02A3  BB 0001					mov	bx,1
+ 02A6					REPEAT:
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-5
+
+
+ 02A6  2B C0					sub	ax,ax
+ 02A8  2B C9					sub	cx,cx
+ 02AA  2B FF					sub	di,di
+ 02AC  2B F6					sub	si,si
+ 02AE  26: A0 0000				mov	al,es:[0000h]
+ 02B2  E8 01B0 R				call BYTE_TO_HEX
+ 02B5  8D 3E 0164 R				lea	di,MCB_Type+6
+ 02B9  89 05					mov	[di],ax
+ 02BB  3D 4135					cmp	ax,4135h
+ 02BE  74 5A					je 	MEN_BX
+ 02C0					STEP:
+ 02C0  8D 3E 017F R				lea	di,MCB_Seg+21
+ 02C4  26: A1 0001				mov	ax,es:[0001h]
+ 02C8  E8 01C1 R				call WRD_TO_HEX
+ 02CB  26: A1 0003				mov	ax,es:[0003h]
+ 02CF  B9 0010					mov cx,10h
+ 02D2  F7 E1				    mul cx
+ 02D4  8D 36 0190 R			    lea	si,MCB_Size+12
+ 02D8  E8 01FF R				call WRD_TO_DEC
+ 02DB  8D 16 015E R				lea	dx,MCB_Type
+ 02DF  B4 09					mov	ah,09h
+ 02E1  CD 21					int	21h
+ 02E3  8D 16 016A R				lea	dx,MCB_Seg
+ 02E7  B4 09					mov	ah,09h
+ 02E9  CD 21					int	21h
+ 02EB  8D 16 0184 R				lea	dx,MCB_Size
+ 02EF  B4 09					mov	ah,09h
+ 02F1  CD 21					int	21h
+				
+ 02F3  8D 36 0194 R				lea	si,MCB_Tail+2
+ 02F7  E8 0273 R				call GET_TAIl
+ 02FA  8D 16 0192 R				lea	dx,MCB_Tail
+ 02FE  B4 09					mov	ah,09h
+ 0300  CD 21					int	21h
+				
+ 0302  83 FB 00					cmp	bx,0
+ 0305  74 0E					jz	END_P
+ 0307  33 C0					xor ax, ax
+ 0309  8C C0				    mov ax, es
+ 030B  26: 03 06 0003			    add ax, es:[0003h]
+ 0310  40				    inc ax
+ 0311  8E C0				    mov es, ax
+ 0313  EB 91					jmp REPEAT
+ 0315					END_P:
+ 0315  5A					pop	dx
+ 0316  59					pop	cx
+ 0317  5B					pop	bx
+ 0318  58					pop	ax
+ 0319  C3					ret
+ 031A					MEN_BX:
+ 031A  BB 0000					mov	bx,0
+ 031D  EB A1					jmp STEP
+ 031F				GET_MCB		ENDP
+				;---------------------------
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Page     1-6
+
+
+ 031F				BEGIN:
+ 031F  E8 0221 R				call GET_MEMORY
+ 0322  E8 0247 R				call GET_EXT_MEMORY
+ 0325  E8 028F R				call GET_MCB
+				
+ 0328  32 C0					xor	al,al
+ 032A  B4 3C					mov	ah,3Ch
+ 032C  CD 21					int	21h
+ 032E  C3					ret
+ 032F				PART1	ENDS
+				END 	START
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+PART1  . . . . . . . . . . . . .  	032F	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+BEGIN  . . . . . . . . . . . . .  	L NEAR	031F	PART1
+BYTE_TO_DEC  . . . . . . . . . .  	N PROC	01D9	PART1	Length = 0026
+BYTE_TO_HEX  . . . . . . . . . .  	N PROC	01B0	PART1	Length = 0011
+
+END_L  . . . . . . . . . . . . .  	L NEAR	01FB	PART1
+END_P  . . . . . . . . . . . . .  	L NEAR	0315	PART1
+EXTENDED_MEMORY_SIZE . . . . . .  	L BYTE	0127	PART1
+
+GET_EXT_MEMORY . . . . . . . . .  	N PROC	0247	PART1	Length = 002C
+GET_MCB  . . . . . . . . . . . .  	N PROC	028F	PART1	Length = 0090
+GET_MEMORY . . . . . . . . . . .  	N PROC	0221	PART1	Length = 0026
+GET_TAIL . . . . . . . . . . . .  	N PROC	0273	PART1	Length = 001C
+
+LOOP_BD  . . . . . . . . . . . .  	L NEAR	01E3	PART1
+
+MCB_LIST . . . . . . . . . . . .  	L BYTE	014F	PART1
+MCB_SEG  . . . . . . . . . . . .  	L BYTE	016A	PART1
+MCB_SIZE . . . . . . . . . . . .  	L BYTE	0184	PART1
+MCB_TAIL . . . . . . . . . . . .  	L BYTE	0192	PART1
+MCB_TYPE . . . . . . . . . . . .  	L BYTE	015E	PART1
+MEN_BX . . . . . . . . . . . . .  	L NEAR	031A	PART1
+
+NEXT . . . . . . . . . . . . . .  	L NEAR	01AD	PART1
+
+QUANTITY_AVAILABLE_MEMORY  . . .  	L BYTE	0103	PART1
+
+RE . . . . . . . . . . . . . . .  	L NEAR	027D	PART1
+REPEAT . . . . . . . . . . . . .  	L NEAR	02A6	PART1
+
+START  . . . . . . . . . . . . .  	L NEAR	0100	PART1
+STEP . . . . . . . . . . . . . .  	L NEAR	02C0	PART1
+
+TETR_TO_HEX  . . . . . . . . . .  	N PROC	01A5	PART1	Length = 000B
+
+WRD_END_L  . . . . . . . . . . .  	L NEAR	021D	PART1
+WRD_LOOP_BD  . . . . . . . . . .  	L NEAR	0205	PART1
+WRD_TO_DEC . . . . . . . . . . .  	N PROC	01FF	PART1	Length = 0022
+WRD_TO_HEX . . . . . . . . . . .  	N PROC	01C1	PART1	Length = 0018
+
+@CPU . . . . . . . . . . . . . .  	TEXT  0101h		
+@FILENAME  . . . . . . . . . . .  	TEXT  lr3_1		
+@VERSION . . . . . . . . . . . .  	TEXT  510		
+
+Microsoft (R) Macro Assembler Version 5.10                  4/13/20 22:35:02
+                                                             Symbols-2
+
+
+
+    254 Source  Lines
+    254 Total   Lines
+     34 Symbols
+
+  47824 + 455339 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
