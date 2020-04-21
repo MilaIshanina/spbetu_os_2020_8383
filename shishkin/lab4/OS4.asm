@@ -4,13 +4,13 @@ CODE SEGMENT
 ROUT PROC FAR
 	jmp INTERRUPT_BEGIN
 	STR_FOR_INT db 'Number of interruptions: 0000$'
-	INTERRUPT_ID dw 0804h
-	KEEP_PSP DW 0
-	KEEP_IP dw 0
-	KEEP_CS dw 0
+	INTERRUPT_ID dw 9888h
 	KEEP_AX dw 0
 	KEEP_SS dw 0
 	KEEP_SP dw 0
+	KEEP_IP dw 0
+	KEEP_CS dw 0
+	KEEP_PSP DW 0
 	INTERRUPTION_STACK dw 128 dup(0)
 
 	INTERRUPT_BEGIN:
@@ -98,7 +98,6 @@ ROUT PROC FAR
 		mov AL, 20h
 		OUT 20h, AL
 		IRET
-		ret
 ROUT ENDP
 LAST_BYTE:
 ;----------------------------------------------
@@ -239,7 +238,7 @@ CHECK_1CH PROC near
 	mov SI, offset INTERRUPT_ID
 	sub SI, offset ROUT
 	mov AX, ES:[BX+SI]
-	cmp AX, 0804h
+	cmp AX, 9888h
 	jne END_OF_CHECK
 	mov IS_INTERRUPT_LOADED, 1
 
@@ -251,9 +250,6 @@ CHECK_1CH PROC near
 CHECK_1CH ENDP
 ;----------------------------------------------
 BEGIN PROC FAR
-	push DS
-	xor AX, AX
-	push AX
 	mov AX, DATA
 	mov DS, AX
 	mov KEEP_PSP, ES	
