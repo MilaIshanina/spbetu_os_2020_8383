@@ -1,0 +1,518 @@
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-1
+
+
+ 0000				CODE	SEGMENT
+				
+ 0000  0100[			localStack db 256 dup(?)
+	   ??			
+			 ]	
+				
+				
+ 0100  00000000			seg_1c		dd 0 
+ 0104  00000000			seg_2f		dd 0
+ 0108  0000			seg_PSP   	dw ?
+				
+ 010A  0000			save_ss     dw 0
+ 010C  0000			save_sp     dw 0
+				
+				ASSUME CS:CODE, DS:DATA, SS:AStack
+						
+				; функция вывода в текущее
+				 положение курсора символ
+				а из AL
+ 010E				outputAL 	PROC 
+ 010E  50					push AX
+ 010F  53					push BX
+ 0110  51					push CX
+					
+ 0111  B4 09					mov AH, 09h
+ 0113  B7 00					mov BH, 0
+ 0115  B9 0001					mov CX, 1
+ 0118  CD 10					int 10h
+				
+ 011A  59					pop CX
+ 011B  5B					pop BX
+ 011C  58					pop AX
+ 011D  C3					ret
+ 011E				outputAL 	ENDP
+				
+				;функция считывания позиц
+				ии курсора: DH - текущая стр
+				ока, DL - колонка курсора
+ 011E				SaveCurs  PROC
+ 011E  50					push AX
+ 011F  53					push BX
+				
+ 0120  B4 03					mov AH, 03h
+ 0122  B7 00					mov BH, 0
+ 0124  CD 10					int 10h
+				
+ 0126  5B					pop BX
+ 0127  58					pop AX
+ 0128  C3					ret
+ 0129				SaveCurs  ENDP
+				
+				;функция, устанавливающая
+				 курсор в заранее определ�
+				�нную в DX позицию
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-2
+
+
+ 0129				SetCurs  PROC
+ 0129  50					push AX
+ 012A  53					push BX
+				
+ 012B  B4 02					mov AH, 02h
+ 012D  B7 00					mov BH, 0
+ 012F  CD 10					int 10h
+						
+ 0131  5B					pop BX
+ 0132  58					pop AX
+ 0133  C3					ret
+ 0134				SetCurs  ENDP
+					
+				;собственный обработчик п
+				рерывания для 2F
+ 0134				My_2F	PROC
+ 0134  80 FC 80					cmp	 AH, 080h ;сравни
+				ваем значение в AH с устано
+				вленным ранее перед преры
+				ванием 
+ 0137  75 02					jne  not_loaded ;если зн�
+				�чения не равны - программ�
+				� не установлена резидент�
+				�ой в памяти
+ 0139  B0 FF					mov  AL, 0FFh ;устанавл
+				иваем в AL значение FF, что н
+				а выходе из прерывания оз�
+				�ачает, что программа уста
+				новлена 
+ 013B					not_loaded:
+ 013B  CF					iret ;иначе просто �
+				�озвращаемся в программу
+ 013C				My_2F	ENDP
+				
+				;собственный обработчик п
+				рерывания для 1C
+ 013C				My_1C	PROC
+						
+ 013C  2E: 8C 16 010A R				mov save_ss, ss
+ 0141  2E: 89 26 010C R				mov save_sp, sp
+						
+ 0146  B8 ---- R				mov ax, SEG CODE
+ 0149  8E D0					mov ss, ax
+ 014B  BC 0100 R				mov sp, offset localStack + 256
+				
+ 014E  50					push AX
+ 014F  53					push BX
+ 0150  51					push CX
+ 0151  52					push DX
+ 0152  06					push ES
+				
+ 0153  FE 06 0000 R				inc count
+ 0157  80 3E 0000 R 39				cmp count, 57 ;диапазон
+				 символов [0..9] = [48..57]
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-3
+
+
+ 015C  75 06					jne show
+ 015E  C6 06 0000 R 30 90			mov count, 48
+ 0164					show:
+						
+						; Сохраняем текущ
+				ее положение курсора
+ 0164  E8 011E R				call SaveCurs
+ 0167  8B CA					mov CX, DX
+				
+						; Переносим курсо
+				р в указаную позицию и выв
+				одим туда символ
+ 0169  B6 17					mov DH, 23
+ 016B  B2 21					mov Dl, 33
+ 016D  E8 0129 R				call SetCurs
+ 0170  50					push AX
+ 0171  A0 0000 R				mov AL, count
+ 0174  E8 010E R				call OutputAL
+ 0177  58					pop AX
+						
+						; Возвращаем курс
+				ор
+ 0178  8B D1					mov DX, CX
+ 017A  E8 0129 R				call SetCurs
+				
+ 017D  B0 20					mov AL, 20h
+ 017F  E6 20					out 20h, AL
+				
+ 0181  07					pop	ES
+ 0182  5A					pop DX
+ 0183  59					pop CX
+ 0184  5B					pop BX
+ 0185  58					pop AX
+						
+ 0186  2E: 8E 16 010A R				mov ss, save_ss
+ 018B  2E: 8B 26 010C R				mov sp, save_sp
+						
+ 0190  CF					iret 	
+ 0191				LAST_BYTE:
+ 0191				My_1C 	ENDP
+				
+				; функция проверки не ввёл
+				 ли пользователь команду /
+				un
+ 0191				Un_check  PROC	FAR
+ 0191  50					push AX
+						
+ 0192  2E: A1 0108 R				mov	AX, seg_PSP
+ 0196  8E C0					mov	ES, AX
+ 0198  2B C0					sub	AX, AX
+ 019A  26: 80 3E 0082 2F			cmp	byte ptr es:[82h],'/'
+ 01A0  75 16					jne	not_un
+ 01A2  26: 80 3E 0083 75			cmp	byte ptr es:[83h],'u'
+ 01A8  75 0E					jne	not_un
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-4
+
+
+ 01AA  26: 80 3E 0084 6E			cmp	byte ptr es:[84h],'n'
+ 01B0  75 06					jne	not_un
+ 01B2  C7 06 0001 R 0000			mov	flag,0
+						
+ 01B8					not_un:
+ 01B8  58					pop	AX
+ 01B9  CB					ret
+ 01BA				Un_check  ENDP
+				
+				;функция, сохраняющая ста�
+				�дартные обработчики прер
+				ываний
+ 01BA				Keep_interr	 PROC
+ 01BA  50					push AX
+ 01BB  53					push BX
+ 01BC  06					push ES
+				
+ 01BD  B4 35					mov AH, 35h ;функция, в
+				ыдающая значение сегмент�
+				� в ES, смещение в BX
+ 01BF  B0 1C					mov AL, 1Ch ;для преры�
+				�ания 1C
+ 01C1  CD 21					int 21h
+ 01C3  2E: 89 1E 0100 R				mov word ptr seg_1c, BX
+ 01C8  2E: 8C 06 0102 R				mov word ptr seg_1c+2, ES
+						
+ 01CD  B4 35					mov AH, 35h ;функция, в
+				ыдающая значение сегмент�
+				� в ES, смещение в BX
+ 01CF  B0 2F					mov AL, 2Fh ;для преры�
+				�ания 2F
+ 01D1  CD 21					int 21h	
+ 01D3  2E: 89 1E 0104 R				mov word ptr seg_2f, BX
+ 01D8  2E: 8C 06 0106 R				mov word ptr seg_2f+2, ES
+				
+ 01DD  07					pop ES
+ 01DE  5B					pop BX
+ 01DF  58					pop AX
+ 01E0  C3					ret
+ 01E1				Keep_interr	 ENDP
+				
+				; функция, загружающая соб
+				ственные обработчики пре�
+				�ывания
+ 01E1				Load_interr	 PROC
+ 01E1  1E					push DS
+ 01E2  52					push DX
+ 01E3  50					push AX
+				
+ 01E4  E8 01BA R				call Keep_interr ;сохран�
+				�ем старые обработчики пр�
+				�рываний
+				
+ 01E7  1E					push DS
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-5
+
+
+ 01E8  BA 013C R				mov DX, offset My_1C
+ 01EB  B8 ---- R				mov AX, seg My_1C	    
+ 01EE  8E D8					mov DS, AX
+ 01F0  B4 25					mov AH, 25h		 ;фу�
+				�кция, меняющая обработчи�
+				� прерываний на указанный 
+				в DX и AX
+ 01F2  B0 1C					mov AL, 1Ch      ;для пре
+				рывания 1C         	
+ 01F4  CD 21			    	int 21h
+				
+ 01F6  BA 0134 R		    	mov DX, offset My_2F
+ 01F9  B8 ---- R				mov AX, seg My_2F	    
+ 01FC  8E D8					mov DS, AX
+ 01FE  B4 25					mov AH, 25h		 ;фу�
+				�кция, меняющая обработчи�
+				� прерываний на указанный 
+				в DX и AX   
+ 0200  B0 2F					mov AL, 2Fh      ;для пре
+				рывания 2F       	
+ 0202  CD 21			    	int 21h	
+ 0204  1F					pop DS
+					
+ 0205  58					pop AX
+ 0206  5A					pop DX
+ 0207  1F					pop DS
+ 0208  C3					ret
+ 0209				Load_interr  ENDP
+				
+				; Выгружаем обработчики п�
+				�ерываний
+ 0209				Unload_interr  PROC
+ 0209  1E					push DS
+				
+ 020A  B4 35					mov AH, 35h
+ 020C  B0 1C					mov AL, 1Ch
+ 020E  CD 21					int 21h
+ 0210  26: 8B 16 0100 R				mov DX, word ptr es:seg_1c
+ 0215  26: A1 0102 R				mov AX, word ptr es:seg_1c+2
+ 0219  2E: 89 16 0100 R				mov word ptr seg_1c, DX
+ 021E  2E: A3 0102 R				mov word ptr seg_1c+2, AX
+				
+ 0222  B4 35					mov AH, 35h
+ 0224  B0 2F					mov AL, 2Fh
+ 0226  CD 21					int 21h
+ 0228  26: 8B 16 0104 R				mov DX, word ptr es:seg_2f
+ 022D  26: A1 0106 R				mov AX, word ptr es:seg_2f+2
+ 0231  2E: 89 16 0104 R				mov word ptr seg_2f, DX
+ 0236  2E: A3 0106 R				mov word ptr seg_2f+2, AX
+				
+ 023A  FA					CLI
+ 023B  2E: 8B 16 0100 R				mov DX, word ptr seg_1c
+ 0240  2E: A1 0102 R				mov AX,	word ptr seg_1c+2
+ 0244  8E D8					mov DS, AX
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-6
+
+
+ 0246  B4 25					mov AH, 25h	;выгружа
+				ем обработчик для 1C
+ 0248  B0 1C					mov AL, 1Ch
+ 024A  CD 21					int 21h
+						
+ 024C  2E: 8B 16 0104 R				mov DX, word ptr seg_2f
+ 0251  2E: A1 0106 R				mov AX,	word ptr seg_2f+2
+ 0255  8E D8					mov DS, AX
+ 0257  B4 25					mov AH, 25h	;выгружа
+				ем обработчик для 2F
+ 0259  B0 2F					mov AL, 2Fh
+ 025B  CD 21					int 21h
+ 025D  FB					STI
+						
+ 025E  1F					pop DS
+				
+ 025F  26: 8E 06 0108 R				mov ES, ES:seg_PSP
+ 0264  B8 4900					mov AX, 4900h		;осв
+				обождаем память по адресу
+				 ES:seg_PSP
+ 0267  CD 21					int 21h
+						
+ 0269  C7 06 0001 R 0001			mov flag, 1		
+					;запоминаем, что памя�
+				�ь была освобождена
+ 026F  BA 0026 R				mov DX, offset Message2
+ 0272  E8 0297 R				call Write_message  ;вывод
+				им соответствующее сообщ�
+				�ние
+				
+ 0275  26: 8E 06 002C				mov ES, ES:[2ch]	
+ 027A  B8 4900					mov AX, 4900h		;осв
+				обождаем память по адресу
+				 ES:[2ch]
+ 027D  CD 21					int 21h
+				
+ 027F  B8 4C00					mov AX, 4C00h		;вых
+				од из программы через фун�
+				�цию 4C
+ 0282  CD 21					int 21h
+ 0284				Unload_interr  ENDP
+				
+ 0284				Make_resident  PROC
+ 0284  8C C0					mov AX, ES
+ 0286  2E: A3 0108 R				mov seg_PSP, AX
+ 028A  BA 0191 R				mov DX, offset LAST_BYTE
+ 028D  81 C2 0200				add DX, 200h	
+						
+ 0291  B4 31					mov AH, 31h ;31h заверша
+				ет программу, оставляя её 
+				резидентной в памяти
+ 0293  B0 00					mov AL, 0 
+ 0295  CD 21					int 21h
+ 0297				Make_resident  ENDP
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-7
+
+
+				
+				; функция вывода сообщени�
+				� на экран
+ 0297				Write_message	PROC
+ 0297  50					push AX
+ 0298  B4 09					mov AH, 09h
+ 029A  CD 21					int 21h
+ 029C  58					pop AX
+ 029D  C3					ret
+ 029E				Write_message		ENDP
+				
+				; Главная функция
+ 029E				Main 	PROC  
+ 029E  1E					push DS
+ 029F  33 C0					xor AX, AX
+ 02A1  50					push AX
+ 02A2  B8 ---- R		   		mov AX, DATA             
+ 02A5  8E D8			  		mov DS, AX
+ 02A7  2E: 8C 06 0108 R				mov seg_PSP, ES 
+ 02AC  C6 06 0000 R 30 90			mov Count, 48
+				
+ 02B2  B8 8000					mov	AX, 8000h ;нам ну�
+				�ны номера в AH от 80h до 0FFh
+ 02B5  CD 2F					int 2Fh
+ 02B7  3C FF					cmp	AL,0FFh	  ; 2fh воз�
+				�ращает 0FFh, если программа
+				 установлена резидентной 
+				в памяти
+ 02B9  75 0F					jne loading
+				
+ 02BB  9A 0191 ---- R				call Un_check
+ 02C0  83 3E 0001 R 00				cmp flag, 0
+ 02C5  75 10					jne alr_loaded
+				
+ 02C7  E8 0209 R				call Unload_interr	;пол
+				ьзователь ввёл /un и програ
+				мма ещё не была выгружена
+ 02CA					loading:			
+					;программа не являетс
+				я резидентной в памяти
+ 02CA  E8 01E1 R				call Load_interr
+						
+ 02CD  8D 16 0003 R				lea DX, Message1
+ 02D1  E8 0297 R				call Write_message
+						
+ 02D4  E8 0284 R				call Make_resident
+ 02D7					alr_loaded:			
+					;программа уже была р�
+				�зидентной
+ 02D7  8D 16 0042 R				lea dx, Message3
+ 02DB  E8 0297 R				call Write_message
+ 02DE  B8 4C00					mov ax, 4C00h
+ 02E1  CD 21					int 21h
+ 02E3				Main 	ENDP
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Page     1-8
+
+
+ 02E3				CODE    ENDS
+				
+ 0000				AStack	SEGMENT  STACK
+ 0000  0100[			DW 256 DUP(?)			
+	   ????			
+			 ]	
+				
+ 0200				AStack  ENDS
+				
+ 0000				DATA		SEGMENT
+ 0000  00			Count 	 	db ?
+ 0001  0001			flag		dw 1
+ 0003  52 65 73 69 64 65	Message1        db 'Resident program has been l
+				oaded', 0dh, 0ah, '$'
+       6E 74 20 70 72 6F	
+       67 72 61 6D 20 68	
+       61 73 20 62 65 65	
+       6E 20 6C 6F 61 64	
+       65 64 0D 0A 24		
+ 0026  52 65 73 69 64 65	Message2	db 'Resident program unloaded',
+				 0dh, 0ah, '$'
+       6E 74 20 70 72 6F	
+       67 72 61 6D 20 75	
+       6E 6C 6F 61 64 65	
+       64 0D 0A 24		
+ 0042  52 65 73 69 64 65	Message3	db 'Resident program is already
+				 loaded', 0dh, 0ah, '$'
+       6E 74 20 70 72 6F	
+       67 72 61 6D 20 69	
+       73 20 61 6C 72 65	
+       61 64 79 20 6C 6F	
+       61 64 65 64 0D 0A	
+       24			
+ 0067				DATA 		ENDS
+				END Main
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+ASTACK . . . . . . . . . . . . .  	0200	PARA	STACK	
+CODE . . . . . . . . . . . . . .  	02E3	PARA	NONE	
+DATA . . . . . . . . . . . . . .  	0067	PARA	NONE	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+ALR_LOADED . . . . . . . . . . .  	L NEAR	02D7	CODE
+
+COUNT  . . . . . . . . . . . . .  	L BYTE	0000	DATA
+
+FLAG . . . . . . . . . . . . . .  	L WORD	0001	DATA
+
+KEEP_INTERR  . . . . . . . . . .  	N PROC	01BA	CODE	Length = 0027
+
+LAST_BYTE  . . . . . . . . . . .  	L NEAR	0191	CODE
+LOADING  . . . . . . . . . . . .  	L NEAR	02CA	CODE
+LOAD_INTERR  . . . . . . . . . .  	N PROC	01E1	CODE	Length = 0028
+LOCALSTACK . . . . . . . . . . .  	L BYTE	0000	CODE	Length = 0100
+
+MAIN . . . . . . . . . . . . . .  	N PROC	029E	CODE	Length = 0045
+MAKE_RESIDENT  . . . . . . . . .  	N PROC	0284	CODE	Length = 0013
+MESSAGE1 . . . . . . . . . . . .  	L BYTE	0003	DATA
+MESSAGE2 . . . . . . . . . . . .  	L BYTE	0026	DATA
+MESSAGE3 . . . . . . . . . . . .  	L BYTE	0042	DATA
+MY_1C  . . . . . . . . . . . . .  	N PROC	013C	CODE	Length = 0055
+MY_2F  . . . . . . . . . . . . .  	N PROC	0134	CODE	Length = 0008
+
+NOT_LOADED . . . . . . . . . . .  	L NEAR	013B	CODE
+NOT_UN . . . . . . . . . . . . .  	L NEAR	01B8	CODE
+
+OUTPUTAL . . . . . . . . . . . .  	N PROC	010E	CODE	Length = 0010
+
+SAVECURS . . . . . . . . . . . .  	N PROC	011E	CODE	Length = 000B
+SAVE_SP  . . . . . . . . . . . .  	L WORD	010C	CODE
+SAVE_SS  . . . . . . . . . . . .  	L WORD	010A	CODE
+SEG_1C . . . . . . . . . . . . .  	L DWORD	0100	CODE
+SEG_2F . . . . . . . . . . . . .  	L DWORD	0104	CODE
+SEG_PSP  . . . . . . . . . . . .  	L WORD	0108	CODE
+SETCURS  . . . . . . . . . . . .  	N PROC	0129	CODE	Length = 000B
+SHOW . . . . . . . . . . . . . .  	L NEAR	0164	CODE
+
+UNLOAD_INTERR  . . . . . . . . .  	N PROC	0209	CODE	Length = 007B
+UN_CHECK . . . . . . . . . . . .  	F PROC	0191	CODE	Length = 0029
+
+WRITE_MESSAGE  . . . . . . . . .  	N PROC	0297	CODE	Length = 0007
+
+@CPU . . . . . . . . . . . . . .  	TEXT  0101h		
+@FILENAME  . . . . . . . . . . .  	TEXT  lab4		
+Microsoft (R) Macro Assembler Version 5.10                  4/26/20 14:39:18
+                                                             Symbols-2
+
+
+@VERSION . . . . . . . . . . . .  	TEXT  510		
+
+
+    317 Source  Lines
+    317 Total   Lines
+     37 Symbols
+
+  47862 + 447109 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
