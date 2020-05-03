@@ -231,8 +231,8 @@ LAST:
 
 ; выход в DOS
 	xor	al,al
-	mov ah, 01h
-	int	21h
+	;mov ah, 01h
+	;int	21h
 	mov ah, 04Ch
 	int 21h
 	ret
