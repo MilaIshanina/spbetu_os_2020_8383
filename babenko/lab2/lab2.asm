@@ -1,0 +1,225 @@
+LAB2		SEGMENT	
+
+ASSUME 	CS:LAB2, DS:LAB2, ES:NOTHING, SS:NOTHING
+
+ORG		100H
+
+START:	JMP	BEGIN
+
+ADRESSMEMORY		    DB "Address of memory:      $"
+ADRESSENVIRONMENT		DB 13, 10, "Address of environment:      $"
+TAILSTR					DB 13, 10, "Tail:                                         $"
+ENVIRONMENTDATA			DB 13, 10, "Data of environment: ", 13, 10, "$"
+PATHSTR					DB "Load module path: ", 13, 10, "$"
+NEXTSTR					DB 13, 10, "$"
+
+
+TETRTOHEX	PROC	NEAR
+
+        AND	AL, 0FH
+        CMP	AL, 09H
+        JBE	NEXT
+      	ADD	AL, 07H
+
+       	NEXT:      
+       	ADD	AL, 30H
+        RET
+
+TETRTOHEX	ENDP
+
+
+BYTETOHEX	PROC	NEAR
+          	
+       	PUSH	CX
+      	MOV	AH, AL
+       	CALL	TETRTOHEX
+        XCHG	AL, AH
+        MOV	CL, 4H
+        SHR	AL, CL
+       	CALL	TETRTOHEX
+        POP	CX
+        RET
+
+BYTETOHEX	ENDP
+
+
+WRDTOHEX	PROC	NEAR
+
+          	PUSH	BX
+          	MOV 	BH, AH
+         	CALL	BYTETOHEX
+          	MOV	[DI], AH
+          	DEC	DI
+          	MOV	[DI], AL
+         	DEC	DI
+          	MOV	AL, BH
+          	CALL	BYTETOHEX
+          	MOV	[DI], AH
+          	DEC	DI
+          	MOV	[DI], AL
+          	POP	BX
+          	RET
+
+WRDTOHEX	ENDP
+
+BYTETODEC	PROC	NEAR
+
+          	PUSH	CX
+          	PUSH	DX
+          	XOR	AH, AH
+          	XOR 	DX, DX
+          	MOV 	CX, 0AH
+
+      	LOOP_BD:   
+			DIV	CX
+          	OR 	DL, 30H
+          	MOV	[SI], DL
+			DEC	SI
+          	XOR	DX, DX
+          	CMP	AX, 0AH
+          	JAE	LOOP_BD
+          	CMP	AL, 00H
+          	JE	END_L
+          	OR 	AL, 30H
+          	MOV	[SI], AL
+		   
+       	END_L:     
+			POP	DX
+          	POP	CX
+          	RET
+
+BYTETODEC	ENDP
+
+PRINT 	PROC	NEAR
+
+       	PUSH	AX
+       	MOV	AH, 09H
+        INT		21H
+		POP 	AX 
+        RET
+
+PRINT  	ENDP
+
+PRINTMEMORYADR PROC NEAR
+
+		MOV	AX, DS:[02H]
+		MOV	DI, OFFSET ADRESSMEMORY
+		ADD	DI, 16H
+		CALL	WRDTOHEX
+		MOV	DX, OFFSET ADRESSMEMORY
+		CALL	PRINT
+		RET
+
+PRINTMEMORYADR ENDP
+
+PRINTENVIRONMENTADR  PROC NEAR
+
+		MOV	AX, DS:[2CH]
+		MOV	DI, OFFSET ADRESSENVIRONMENT
+		ADD	DI, 1DH 
+		CALL	WRDTOHEX
+		MOV	DX, OFFSET ADRESSENVIRONMENT
+		CALL	PRINT
+		RET
+
+PRINTENVIRONMENTADR  ENDP
+
+
+PRINTCOMMANDSTRINGTAIL  PROC NEAR
+
+		MOV SI, 1
+		MOV CX, 0
+		MOV	CL, DS:[80H]
+		CMP	CL, 0
+		JZ	EMPTY
+		MOV	DI, OFFSET TAILSTR		
+		ADD	DI, 8H
+			
+		CYCLE:
+		MOV	AL, DS:[80H + SI]
+		MOV	[DI], AL
+		INC	DI
+		INC	SI
+		LOOP	CYCLE
+		
+		EMPTY:
+		MOV	DX, OFFSET TAILSTR
+		CALL	PRINT
+		RET
+
+PRINTCOMMANDSTRINGTAIL  ENDP
+
+PRINTENVIRONMENTAREA PROC NEAR
+
+		MOV	DX, OFFSET ENVIRONMENTDATA
+		CALL	PRINT
+		MOV 	BX, 2CH
+		MOV 	DS, [BX]
+		MOV 	DI, 0
+	
+		STARTofSTR:
+		CMP 	BYTE PTR [DI], 00H
+		JZ 		PRINTNEXTSTR
+		MOV 	DL, [DI]
+		MOV 	AH, 02H
+		INT 	21H
+		JMP 	ENVIRONMENTEND
+	
+       	PRINTNEXTSTR:
+		PUSH 	DS
+		MOV 	CX, CS
+		MOV 	DS, CX
+		MOV 	DX, OFFSET NEXTSTR
+		CALL 	PRINT
+		POP 	DS
+	
+       	ENVIRONMENTEND:
+		INC 	DI
+		CMP 	WORD PTR [DI], 0001H
+		JZ 		RETURN
+		JMP 	STARTofSTR
+		RET
+		
+		RETURN:
+		RET
+
+PRINTENVIRONMENTAREA ENDP
+
+PRINTPATHMODULE PROC NEAR
+
+		PUSH 	DS
+		MOV 	AX, CS
+       	MOV 	DS, AX
+		MOV		DX, OFFSET PATHSTR
+		CALL 	PRINT
+		POP 	DS
+		ADD 	DI, 2
+		
+       	CIRCLE:
+		CMP 	BYTE PTR [DI], 00H
+		JZ 		PATHFINISH
+		MOV 	DL, [DI]
+		MOV 	AH, 02H
+		INT 	21H
+		INC 	DI
+		JMP 	CIRCLE
+
+		PATHFINISH:
+		RET
+
+PRINTPATHMODULE ENDP
+
+		BEGIN:          	
+
+		CALL PRINTMEMORYADR
+		CALL PRINTENVIRONMENTADR 
+		CALL PRINTCOMMANDSTRINGTAIL 
+		CALL PRINTENVIRONMENTAREA
+		CALL PRINTPATHMODULE
+		
+		MOV	AH, 4CH
+		INT	21H
+		      	
+LAB2	ENDS
+END 	START
+
