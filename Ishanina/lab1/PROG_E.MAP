@@ -1,7 +1,0 @@
-
- Start  Stop   Length Name                   Class
- 00000H 001FFH 00200H STACKK                 
- 00200H 00298H 00099H DATA                   
- 002A0H 003B8H 00119H CODE                   
-
-Program entry point at 002A:0057
