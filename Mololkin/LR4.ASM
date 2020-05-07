@@ -8,9 +8,22 @@ ROUT PROC FAR
 	INTER_ID dw 7373h
 	KEEP_IP dw 0
 	KEEP_CS dw 0
+    KEEP_SS dw 0
+    KEEP_SP dw 0
+    KEEP_AX dw 0
 	KEEP_PSP dw 0
+    ROUT_STACK dw 128 DUP(0)
 
 START_ROUT:        
+    mov KEEP_SS, ss
+    mov KEEP_SP, sp
+    mov KEEP_AX, ax
+    mov ax, seg ROUT_STACK
+    mov ss, ax
+    mov ax, offset ROUT_STACK
+	add ax, 256 
+	mov sp, ax
+
     push ax
     push bx
     push ds
@@ -18,8 +31,7 @@ START_ROUT:
     push si
     push cx
     push es
-    mov ax, seg INTER_NUMB
-    mov ds, ax
+
     call getCurs
     push dx
     call setCurs
@@ -70,7 +82,9 @@ END_LOOP:
     pop ds
     pop bx
     pop ax
-
+    mov sp, KEEP_SP
+    mov ax, KEEP_AX
+    mov ss, KEEP_SS
     mov al, 20h
     out 20h, al
     IRET
