@@ -2,21 +2,34 @@ CODE    SEGMENT
 ASSUME  CS:CODE,    DS:DATA,    SS:ASTACK
 
 INTER   PROC    FAR
-    jmp     INTER_START
-		SYMB             DB  0
-		SIGNATURE        DW  1234h
+        jmp     INTER_START
+		SYMB               DB  0
+		SIGNATURE          DW  1234h
 		KEEP_IP 	       DW  0
 		KEEP_CS 	       DW  0
 		KEEP_PSP 	       DW  0
+		KEEP_AX 	       DW  0
+		KEEP_SS        	       DW  0
+		KEEP_SP 	       DW  0
+		INT_STACK 	       DW 128 dup(0)
 		
     INTER_START:
+		mov 	KEEP_AX, AX
+		mov 	KEEP_SP, SP
+		mov 	KEEP_SS, SS
+		mov 	AX, SEG INT_STACK
+		mov 	SS, AX
+		mov 	AX, offset INT_STACK
+		add 	AX, 256
+		mov 	SP, AX
+	
 		push	AX
 		push    BX
 		push    CX
 		push    DX
 		push    SI
-    push    ES
-    push    DS
+                push    ES
+                push    DS
 		mov 	AX, seg SYMB
 		mov 	DS, AX
         
@@ -87,6 +100,12 @@ INTER   PROC    FAR
 			pop     CX
 			pop     BX
 			pop		AX
+			
+		    mov 	SP, KEEP_SP
+		    mov 	AX, KEEP_SS
+		    mov 	SS, AX
+		    mov 	AX, KEEP_AX
+			
 			mov 	AL, 20h
 			out 	20h, AL
 			IRET
@@ -273,8 +292,8 @@ ASTACK  ENDS
 DATA    SEGMENT
 	STR_LOADED_ALREADY DB  "Interruption loaded already ",10,13,"$"
 	STR_NOT_LOADED     DB  "Interruption isn't loaded",10,13,"$"
-  IS_LOADED          DB  0
-  IS_UN              DB  0
+    IS_LOADED          DB  0
+    IS_UN               DB  0
 DATA    ENDS
 
 END 	MAIN 
