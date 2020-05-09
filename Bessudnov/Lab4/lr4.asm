@@ -15,21 +15,32 @@ DATA    ENDS
 ;прерывание
 MY_INT   PROC    FAR
         jmp     MY_INT_START
-	MY_INT_DATA:
 		INT_COUNTER        DB  "000 interrupts"
 		ID                 DW  6506h
-		KEEP_IP 	       DW  0
-		KEEP_CS 	       DW  0
-		KEEP_PSP 	       DW  0
+		KEEP_AX 	DW 0
+		KEEP_SS 	DW 0
+		KEEP_SP 	DW 0
+		KEEP_IP 	DW 0
+		KEEP_CS 	DW 0
+		KEEP_PSP 	DW 0
+		INT_STACK 	DW 128 dup(0)
 		
     MY_INT_START:
-		push	AX
-		push    BX
-		push    CX
-		push    DX
-		push    SI
-        push    ES
-        push    DS
+		mov 	KEEP_AX, AX
+		mov 	KEEP_SP, SP
+		mov 	KEEP_SS, SS
+		mov 	AX, SEG INT_STACK
+		mov 	SS, AX
+		mov 	AX, offset INT_STACK
+		add 	AX, 256
+		mov 	SP, AX
+		push 	BX
+		push 	CX
+		push 	DX
+		push 	SI
+		push 	DS
+		push 	BP
+		push 	ES
 		
 		mov 	AX, seg INT_COUNTER
 		mov 	DS, AX
@@ -86,19 +97,20 @@ MY_INT   PROC    FAR
 		mov     BH, 0h
 		int     10h
 
-		pop     DS
-		pop     ES
-		pop		SI
-		pop     DX
-		pop     CX
-		pop     BX
-		pop		AX
-
-		mov     AL, 20h
-		out     20h, AL
+		pop 	DS
+		pop 	SI
+		pop 	DX
+		pop 	CX
+		pop 	BX
+		mov 	SP, KEEP_SP
+		mov 	AX, KEEP_SS
+		mov 	SS, AX
+		mov 	AX, KEEP_AX
+		mov 	AL, 20h
+		out 	20h, AL
 	iret
 MY_INT    ENDP
-    MY_INT_END:
+MY_INT_END:
 	
 ;проверка прерывания на загруженность
 MY_INT_CHECK       PROC
@@ -272,4 +284,4 @@ MAIN PROC
 		int 	21h
 	MAIN ENDP
 CODE    ENDS
-END 	MAIN 
+END 	MAIN  
