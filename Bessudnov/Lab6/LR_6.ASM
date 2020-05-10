@@ -15,6 +15,7 @@ DATA SEGMENT
 	MES_GOOD  	db "Free memory",10,13,"$"
 	
 	MES_END_SUC		db  10, 13,"Program ended",10, 13, "$"
+	MES_EXIT_CODE  	db 	10, 13,"Exit code:     ", 10, 13, "$"
 	MES_END_CTRLC	db "Program ended with CRTL+C command", 10, 13, "$"
 	MES_END_DEV     db "Program ended with device error",10,13,"$"
 	MES_END_RES     db "Program ended with 31h",10,13,"$"
@@ -171,7 +172,15 @@ LOAD_GOOD:
 		je RES
 
 GOOD:
+		push DX
 		mov DX, offset MES_END_SUC
+		call WRITE_STR
+		pop DX
+		push DI
+		mov DI, offset MES_EXIT_CODE
+		mov [DI+15], AL
+		pop DI
+		mov DX, offset MES_EXIT_CODE
 		jmp LOAD_GOOD_END
 CTRLC:
 		mov DX, offset MES_END_CTRLC
