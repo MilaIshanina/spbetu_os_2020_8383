@@ -11,6 +11,7 @@ DATA SEGMENT
 	KEEP_SS dw 0
 	KEEP_SP dw 0
 	
+	STR_SYMBOL db 13, 10, 'SYMBOL:    $'
 	IS_MEMORY_FREED db 0
 	STR_FUNCTION_COMPLETED db 13, 10, 'Memory freed$'
 	STR_FUNC_NOT_COMPLETED db 13, 10, 'Memory is not freed$'
@@ -56,6 +57,7 @@ LOADING_MODULE_LR2 PROC near
 	push AX
 	push BX
 	push DX
+	
 	push DS
 	push ES
 	mov KEEP_SP, SP
@@ -120,6 +122,12 @@ LOADING_MODULE_LR2 PROC near
 	PROGRAM_UPLOADED:
 		mov AX, 4D00h
 		int 21h
+		push SI
+		mov SI, offset STR_SYMBOL
+		mov [SI + 10], AL
+		pop SI
+		mov DX, offset STR_SYMBOL
+		call PRINT
 		mov DX, offset STR_PROGRAM_END
 		call PRINT
 		cmp AH, 0
@@ -183,7 +191,6 @@ COMMAND_LINE PROC near
 		mov AL, ES:[DI]
 		cmp AL, 0
 		je DELETE_FILE_NAME
-		;mov BYTE PTR [PROGRAM_PATH + SI], AL
 		mov PROGRAM_PATH[SI], AL
 		inc DI
 		inc SI
@@ -201,11 +208,9 @@ COMMAND_LINE PROC near
 	ADD_FILE_NAME:
 		inc SI
 		inc DI
-		;mov AL, BYTE PTR [PROGRAM_NAME + DI]
 		mov AL, PROGRAM_NAME[DI]
 		cmp AL, '$'
 		je END_OF_COMMAND_LINE
-		;mov BYTE PTR [PROGRAM_PATH + SI], AL
 		mov PROGRAM_PATH[SI], AL
 		jmp ADD_FILE_NAME
 		
