@@ -39,8 +39,7 @@ MY_INT   PROC    FAR
 		push 	DX
 		push 	SI
 		push 	DS
-		push 	BP
-		push 	ES
+
 		
 		mov 	AX, seg INT_COUNTER
 		mov 	DS, AX
@@ -91,6 +90,7 @@ MY_INT   PROC    FAR
 
 		pop		BP
 		pop		ES
+		
 
         pop     DX
         mov     AH, 02h
