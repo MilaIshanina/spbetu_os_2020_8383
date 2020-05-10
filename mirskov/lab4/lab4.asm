@@ -40,6 +40,7 @@ CODE SEGMENT
 		push DS
 		push BP
 		push ES
+		push SI
 
 		call GET_CURS
 		push DX
@@ -61,6 +62,7 @@ CODE SEGMENT
 		call SET_CURS
 
 	  END_INTERRUPT:
+	  	pop SI
 		pop ES
 		pop BP
 		pop DS
