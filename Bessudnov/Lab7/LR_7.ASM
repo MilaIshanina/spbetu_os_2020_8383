@@ -7,8 +7,8 @@ ASTACK SEGMENT STACK
 ASTACK ENDS
 
 DATA SEGMENT
-	FILE_NAME_1  	db 	"OVL_1.EXE", 0
-	FILE_NAME_2  	db 	"OVL_2.EXE", 0
+	FILE_NAME_1  	db 	"OVL_1.OVL", 0
+	FILE_NAME_2  	db 	"OVL_2.OVL", 0
 	OFFSET_PROG 	dw 0
 	PATH 			db 128 dup(0)
 	MES_ERR_7 		db "ERROR 7: destriyed MCB",10,13,"$"
